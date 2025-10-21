@@ -289,6 +289,10 @@ def search_title_and_pic(download_path, option,max_count=15):
 
     # 添加防挡
     for i in range(count):
+        #包含有nonH的tag的不需要添加防挡
+        if "非H" in result_tag[i]:
+            continue
+
         image_path = os.path.join(folder_path, f'{i}.jpg')
         if os.path.exists(image_path):
             from PIL import Image as ProcessImage

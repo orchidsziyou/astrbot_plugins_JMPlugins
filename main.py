@@ -210,7 +210,10 @@ class MyPlugin(Star):
             yield event.plain_result("未找到该本子")
             return
 
-
+        # 检查tag里面是否有非H的tag
+        nonH_tags = False
+        if "非H" in album.tags:
+            nonH_tags = True
 
         # 放入json当中
         data = []
@@ -261,8 +264,7 @@ class MyPlugin(Star):
                     count = min(img_count, len(photo01))
                 else:
                     count = 1
-
-                print(count)
+                # print(count)
 
                 for i in range(count):
                     image: JmImageDetail = photo01[i]
@@ -270,21 +272,21 @@ class MyPlugin(Star):
                         os.remove(os.path.join(folder_path, f'{i}.jpg'))
                     client.download_by_image_detail(image, os.path.join(folder_path, f'{i}.jpg'))
 
-                #添加防gank
-                for i in range(count):
-                    image_path= os.path.join(folder_path, f'{i}.jpg')
-                    if os.path.exists(image_path):
-                        from PIL import Image as ProcessImage
-                        original_image = ProcessImage.open(image_path)
-                        # 获取原始图片的宽度和高度
-                        width, height = original_image.size
-                        # 创建一张新的空白图片，大小为原图的宽度和五倍高度
-                        new_image = ProcessImage.new('RGB', (width, height * 5), color=(255, 255, 255))
-                        # 将原图粘贴到新图片的下半部分
-                        new_image.paste(original_image, (0, height * 4))
-                        # 保存最终结果
-                        new_image.save(image_path)
-
+                if not nonH_tags :
+                    #添加防gank
+                    for i in range(count):
+                        image_path= os.path.join(folder_path, f'{i}.jpg')
+                        if os.path.exists(image_path):
+                            from PIL import Image as ProcessImage
+                            original_image = ProcessImage.open(image_path)
+                            # 获取原始图片的宽度和高度
+                            width, height = original_image.size
+                            # 创建一张新的空白图片，大小为原图的宽度和五倍高度
+                            new_image = ProcessImage.new('RGB', (width, height * 5), color=(255, 255, 255))
+                            # 将原图粘贴到新图片的下半部分
+                            new_image.paste(original_image, (0, height * 4))
+                            # 保存最终结果
+                            new_image.save(image_path)
 
                 # if os.path.exists('./data/plugins/astrbot_plugins_JMPlugins/result.jpg'):
                 #     os.remove('./data/plugins/astrbot_plugins_JMPlugins/result.jpg')
@@ -1176,7 +1178,17 @@ async def send_daily_message(context: Context,botid):
             ]
         )
         message_chain.chain.append(time_node)
-
+        #发送写好的图片
+        pic_path = "./data/plugins/astrbot_plugins_JMPlugins/no_new_benzi.gif"
+        if os.path.exists(pic_path):
+            image_node = Node(
+                uin=botid,
+                name="仙人",
+                content=[
+                    Image.fromFileSystem(pic_path)
+                ]
+            )
+            message_chain.chain.append(image_node)
     else:
 
         time_node =Node(
