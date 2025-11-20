@@ -97,7 +97,10 @@ class MyPlugin(Star):
                 self.send_daily_comics_task,
                 CronTrigger(hour='8,20', minute=0),
                 # IntervalTrigger(minutes=5),
-                id='daily_comic_send'
+                id='daily_comic_send',
+                misfire_grace_time=120, # 允许120秒的延迟容
+                coalesce=True, # 合并错过的任务
+                max_instances=1
             )
             self.scheduler.start()
             print("APScheduler 定时任务已启动")
