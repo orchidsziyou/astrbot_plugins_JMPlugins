@@ -620,8 +620,43 @@ class MyPlugin(Star):
                 resNode = Nodes(
                     nodes=All_nodes
                 )
+                # 新添加的
+                try:
+                    yield event.chain_result([resNode])
+                except Exception as e:
+                    print(e)
+                    new_All_nodes = []
+                    from astrbot.api.message_components import Node, Plain, Image
+                    botid = event.get_self_id()
 
-                yield event.chain_result([resNode])
+                    notion_node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=[
+                            Plain("发送带图片的聊天记录失败，因此仅发送文字版的")
+                        ]
+                    )
+
+                    new_All_nodes.append(notion_node)
+
+                    for i in range(count):
+                        node = Node(
+                            uin=botid,
+                            name="仙人",
+                            content=
+                            [
+                                Plain("...\n"),
+                                Plain(f"id:{result_album_id[i]}\n"),
+                                Plain(f"本子名称：{result_album_title[i]}\n"),
+                                Plain(f"tag:{result_tag[i]}")
+                            ]
+                        )
+                        new_All_nodes.append(node)
+
+                    newresNode = Nodes(
+                        nodes=new_All_nodes
+                    )
+                    yield event.chain_result([newresNode])
 
             else:
                 str = ''
@@ -1319,13 +1354,14 @@ async def send_daily_message(context: Context,botid):
                 message_chain.chain.append(info_node)
                 message_chain.chain.append(time_node)
 
-                for i in range(result_album_id):
+                for i in range(len(result_album_id)):
                     # 添加安全检查，防止tag索引超出范围
                     tag_str = ""
                     if i >= len(result_tag):
                         tag_str = "tag获取失败"
                     else:
                         tag_str = result_tag[i]
+
                     node = Node(
                         uin=botid,
                         name="仙人",
