@@ -237,13 +237,16 @@ def search_title_and_pic(download_path, option,max_count=15):
     # 如果配置文件中也没有key，则使用默认值
     if not key:
         key = "ブルーアーカイブ"
-    
+
+    album: JmSearchPage= None
+
     try:
         client = JmOption.copy_option(option).new_jm_client()
         album: JmSearchPage = client.search_site(search_query=key, page=1)
         empty_tag = 0
     except:
         empty_tag = 1
+        album = []
 
     int_filterid=int(get_last_album_id())
 
@@ -273,10 +276,10 @@ def search_title_and_pic(download_path, option,max_count=15):
         try:
             page = client.search_site(search_query=result_album_id[i])
             album_detail = page.single_album
+            result_tag.append(album_detail.tags)
         except:
             result_tag.append([" "])
             continue
-        result_tag.append(album_detail.tags)
 
         photo = album_detail.getindex(0)
         photo01 = client.get_photo_detail(photo.photo_id, False)

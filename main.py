@@ -617,9 +617,9 @@ class MyPlugin(Star):
                     All_nodes.append(node)
                     All_nodes.append(pic_node)
 
-                    resNode = Nodes(
-                        nodes=All_nodes
-                    )
+                resNode = Nodes(
+                    nodes=All_nodes
+                )
 
                 yield event.chain_result([resNode])
 
@@ -1163,7 +1163,7 @@ async def send_daily_message(context: Context,botid):
 
     global cover_count
     # 定时任务
-    result_album_id, result_album_title, result_tag = search_title_and_pic(folder_path, option, cover_count)
+    result_album_id, result_album_title, result_tag = search_title_and_pic(download_path=folder_path, option=option, max_count=cover_count)
     count = len(result_album_id)
     # print(len(result_album_id),len(result_album_title),len(result_tag))
 
@@ -1193,7 +1193,6 @@ async def send_daily_message(context: Context,botid):
             )
             message_chain.chain.append(image_node)
     else:
-
         time_node =Node(
             uin=botid,
             name="仙人",
@@ -1203,7 +1202,17 @@ async def send_daily_message(context: Context,botid):
         )
         message_chain.chain.append(time_node)
 
-        for i in range(count):
+        total_len = len(result_album_id)
+
+        # 前15个加上封面，后面的不加封面
+
+        for i in range(total_len):
+            # 添加安全检查，防止tag索引超出范围
+            tag_str = []
+            if i >= len(result_tag):
+                tag_str = "tag获取失败"
+            else:
+                tag_str = result_tag[i]
             node = Node(
                 uin=botid,
                 name="仙人",
@@ -1212,12 +1221,16 @@ async def send_daily_message(context: Context,botid):
                     Plain("...\n"),
                     Plain(f"id:{result_album_id[i]}\n"),
                     Plain(f"本子名称：{result_album_title[i]}\n"),
-                    Plain(f"标签：{result_tag[i]}\n"),
+                    Plain(f"标签：{tag_str}\n"),
                 ]
             )
+            if i >= cover_count:
+                message_chain.chain.append(node)
+                continue
+
             #判断tag里面是否有需要过滤的内容：
             filter_tag = ['NTR','猎奇','寝取']
-            if any(tag in result_tag[i] for tag in filter_tag):
+            if any(tag in tag_str for tag in filter_tag):
                 print("检测到了过滤内容")
                 # 检验是否有用来替换屏蔽图片的图片
                 pic_path="./data/plugins/astrbot_plugins_JMPlugins/seia_blockpic.jpg"
@@ -1265,6 +1278,72 @@ async def send_daily_message(context: Context,botid):
             await context.send_message(umo, message_chain)
         except Exception as e:
             print(e)
+            # 发送纯文字版本的更新本子
+            from astrbot.api.event import MessageChain
+            message_chain = MessageChain()
+            if count == 0:
+                time_node = Node(
+                    uin=botid,
+                    name="仙人",
+                    content=[
+                        Plain("前段时间没有更新新的本子，起飞失败")
+                    ]
+                )
+                message_chain.chain.append(time_node)
+                # 发送写好的图片
+                pic_path = "./data/plugins/astrbot_plugins_JMPlugins/no_new_benzi.gif"
+                if os.path.exists(pic_path):
+                    image_node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=[
+                            Image.fromFileSystem(pic_path)
+                        ]
+                    )
+                    message_chain.chain.append(image_node)
+            else:
+                info_node = Node(
+                    uin=botid,
+                    name="仙人",
+                    content=[
+                        Plain("图片发送失败，仅发送文本信息")
+                    ]
+                )
+                time_node = Node(
+                    uin=botid,
+                    name="仙人",
+                    content=[
+                        Plain("前一时间段内更新的本子有：")
+                    ]
+                )
+                message_chain.chain.append(info_node)
+                message_chain.chain.append(time_node)
+
+                for i in range(result_album_id):
+                    # 添加安全检查，防止tag索引超出范围
+                    tag_str = ""
+                    if i >= len(result_tag):
+                        tag_str = "tag获取失败"
+                    else:
+                        tag_str = result_tag[i]
+                    node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=
+                        [
+                            Plain("...\n"),
+                            Plain(f"id:{result_album_id[i]}\n"),
+                            Plain(f"本子名称：{result_album_title[i]}\n"),
+                            Plain(f"标签：{tag_str}\n"),
+                        ]
+                    )
+
+                    message_chain.chain.append(node)
+                    message_chain.chain.append(pic_node)
+                try:
+                    await context.send_message(umo, message_chain)
+                except Exception as e:
+                    print(e)
             continue
 
 
