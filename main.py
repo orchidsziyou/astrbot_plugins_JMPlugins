@@ -1375,7 +1375,6 @@ async def send_daily_message(context: Context,botid):
                     )
 
                     message_chain.chain.append(node)
-                    message_chain.chain.append(pic_node)
                 try:
                     await context.send_message(umo, message_chain)
                 except Exception as e:
