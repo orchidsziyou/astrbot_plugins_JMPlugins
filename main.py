@@ -362,7 +362,57 @@ class MyPlugin(Star):
                 # resNode = Nodes(
                 #     nodes=[node, tag_node, picture_node]
                 # )
-                yield event.chain_result([resNode])
+
+                #如果图片发送失败，就只发送封面
+
+                try:
+                    yield event.chain_result([resNode])
+                except Exception as e:
+                    line_node= Node(
+                        uin=botid,
+                        name="仙人",
+                        content=[
+                            Plain("图片发送失败，只发送封面")
+                        ]
+                    )
+                    node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=
+                        [
+                            Plain("...\n"),
+                            Plain(f"id:{album.id}\n"),
+                            Plain(f"本子名称：{album.name}\n"),
+                            Plain(f"作者：{album.author}\n"),
+                            Plain(f"只会发送前{img_count}张图片，剩余的自己去搜打撤")
+                        ]
+                    )
+                    tag_node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=[
+                            Plain("...\n"),
+                            Plain(f"tags：{album.tags}\n")
+                        ]
+                    )
+                    image_path_01 = os.path.join(folder_path, f'{0}.jpg')
+                    surface_node = Node(
+                        uin=botid,
+                        name="仙人",
+                        content=
+                        [
+                            Image.fromFileSystem(image_path_01)
+                        ]
+                    )
+                    new_all_nodes = []
+                    new_all_nodes.append(line_node)
+                    new_all_nodes.append(node)
+                    new_all_nodes.append(tag_node)
+                    new_all_nodes.append(surface_node)
+                    newresNode = Nodes(
+                        nodes=new_all_nodes
+                    )
+                    yield event.chain_result([newresNode])
 
             except Exception as e:
                 print(e)
