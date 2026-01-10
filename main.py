@@ -1104,110 +1104,110 @@ class MyPlugin(Star):
             yield event.plain_result("参数错误，请使用数字")
 
 
-    @filter.command("search")
-    async def jm_search_command(self, event: AstrMessageEvent):
-        ''' 这是一个 搜索图片 指令'''
-        if event.get_message_type() == MessageType.FRIEND_MESSAGE:
-            if event.get_sender_id() not in white_list_user:
-                yield event.plain_result("该指令仅限管理员使用")
-                return
-        if event.get_message_type() == MessageType.GROUP_MESSAGE:
-            if event.get_group_id() not in white_list_group:
-                yield event.plain_result("该群没有权限使用该指令")
-                return
-
-        global last_search_picture_time, Current_search_picture_time, flag03
-        Current_search_picture_time = int(datetime.now().timestamp())
-        time_diff_in_seconds = Current_search_picture_time - last_search_picture_time
-        last_search_picture_time = Current_search_picture_time
-        if time_diff_in_seconds < CoolDownTime:
-            cd_time = CoolDownTime - time_diff_in_seconds
-            if flag03 == 0:
-                flag03 += 1
-                yield event.plain_result(f"进CD了，请{cd_time}秒后再试")
-            else:
-                flag03 += 1
-            return
-        flag03 = 0
-
-        image_url = ''
-        message_chain = event.get_messages()
-        for msg in message_chain:
-            # print(msg)
-            # print("\n")
-            if msg.type == 'Image':
-                PictureID = msg.file
-                print(f"图片ID: {PictureID}")
-                from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
-                assert isinstance(event, AiocqhttpMessageEvent)
-                client = event.bot
-                payloads2 = {
-                    "file_id": PictureID
-                }
-                response = await client.api.call_action('get_image', **payloads2)  # 调用 协议端  API
-                # print(response)
-                image_url = response['file']
-
-            elif msg.type == 'Reply':
-                # 处理回复消息
-                from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
-                assert isinstance(event, AiocqhttpMessageEvent)
-                client = event.bot
-                payload = {
-                    "message_id": msg.id
-                }
-                response = await client.api.call_action('get_msg', **payload)  # 调用 协议端  API
-                # print(response)
-                reply_msg = response['message']
-                for msg in reply_msg:
-                    if msg['type'] == 'image':
-                        from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import \
-                            AiocqhttpMessageEvent
-                        assert isinstance(event, AiocqhttpMessageEvent)
-                        client = event.bot
-                        payloads2 = {
-                            "file_id": msg['data']['file']
-                        }
-                        response = await client.api.call_action('get_image', **payloads2)  # 调用 协议端  API
-                        image_url = response['file']
-
-        print(f"图片URL: {image_url}")
-        if image_url == '':
-            yield event.plain_result("未检测到图片")
-            return
-        else:
-            try:
-                # ascii2d暂时没反应
-                engin = Ascii2D(base_url="https://ascii2d.obfs.dev")
-                resp = await engin.search(file=image_url)
-                raw = resp.raw
-                count = 0
-                result_str = ''
-                for r in raw:
-                    if (r.url == ""):
-                        continue
-                    result_str += f"{count}:{r.url}\n"
-                    count += 1
-                    if count == 2:
-                        break
-                if count == 0:
-                    yield event.plain_result("未找到相似图片")
-                else:
-                    botid = event.get_self_id()
-                    from astrbot.api.message_components import Node, Plain, Image
-                    node = Node(
-                        uin=botid,
-                        name="仙人",
-                        content=[
-                            Plain("找到相似图片：\n"),
-                            Plain(result_str)
-                        ]
-                    )
-                    yield event.chain_result([node])
-
-            except Exception as e:
-                print(e)
-                yield event.plain_result("搜索图片失败")
+    # @filter.command("search")
+    # async def jm_search_command(self, event: AstrMessageEvent):
+    #     ''' 这是一个 搜索图片 指令'''
+    #     if event.get_message_type() == MessageType.FRIEND_MESSAGE:
+    #         if event.get_sender_id() not in white_list_user:
+    #             yield event.plain_result("该指令仅限管理员使用")
+    #             return
+    #     if event.get_message_type() == MessageType.GROUP_MESSAGE:
+    #         if event.get_group_id() not in white_list_group:
+    #             yield event.plain_result("该群没有权限使用该指令")
+    #             return
+    #
+    #     global last_search_picture_time, Current_search_picture_time, flag03
+    #     Current_search_picture_time = int(datetime.now().timestamp())
+    #     time_diff_in_seconds = Current_search_picture_time - last_search_picture_time
+    #     last_search_picture_time = Current_search_picture_time
+    #     if time_diff_in_seconds < CoolDownTime:
+    #         cd_time = CoolDownTime - time_diff_in_seconds
+    #         if flag03 == 0:
+    #             flag03 += 1
+    #             yield event.plain_result(f"进CD了，请{cd_time}秒后再试")
+    #         else:
+    #             flag03 += 1
+    #         return
+    #     flag03 = 0
+    #
+    #     image_url = ''
+    #     message_chain = event.get_messages()
+    #     for msg in message_chain:
+    #         # print(msg)
+    #         # print("\n")
+    #         if msg.type == 'Image':
+    #             PictureID = msg.file
+    #             print(f"图片ID: {PictureID}")
+    #             from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
+    #             assert isinstance(event, AiocqhttpMessageEvent)
+    #             client = event.bot
+    #             payloads2 = {
+    #                 "file_id": PictureID
+    #             }
+    #             response = await client.api.call_action('get_image', **payloads2)  # 调用 协议端  API
+    #             # print(response)
+    #             image_url = response['file']
+    #
+    #         elif msg.type == 'Reply':
+    #             # 处理回复消息
+    #             from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
+    #             assert isinstance(event, AiocqhttpMessageEvent)
+    #             client = event.bot
+    #             payload = {
+    #                 "message_id": msg.id
+    #             }
+    #             response = await client.api.call_action('get_msg', **payload)  # 调用 协议端  API
+    #             # print(response)
+    #             reply_msg = response['message']
+    #             for msg in reply_msg:
+    #                 if msg['type'] == 'image':
+    #                     from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import \
+    #                         AiocqhttpMessageEvent
+    #                     assert isinstance(event, AiocqhttpMessageEvent)
+    #                     client = event.bot
+    #                     payloads2 = {
+    #                         "file_id": msg['data']['file']
+    #                     }
+    #                     response = await client.api.call_action('get_image', **payloads2)  # 调用 协议端  API
+    #                     image_url = response['file']
+    #
+    #     print(f"图片URL: {image_url}")
+    #     if image_url == '':
+    #         yield event.plain_result("未检测到图片")
+    #         return
+    #     else:
+    #         try:
+    #             # ascii2d暂时没反应
+    #             engin = Ascii2D(base_url="https://ascii2d.obfs.dev")
+    #             resp = await engin.search(file=image_url)
+    #             raw = resp.raw
+    #             count = 0
+    #             result_str = ''
+    #             for r in raw:
+    #                 if (r.url == ""):
+    #                     continue
+    #                 result_str += f"{count}:{r.url}\n"
+    #                 count += 1
+    #                 if count == 2:
+    #                     break
+    #             if count == 0:
+    #                 yield event.plain_result("未找到相似图片")
+    #             else:
+    #                 botid = event.get_self_id()
+    #                 from astrbot.api.message_components import Node, Plain, Image
+    #                 node = Node(
+    #                     uin=botid,
+    #                     name="仙人",
+    #                     content=[
+    #                         Plain("找到相似图片：\n"),
+    #                         Plain(result_str)
+    #                     ]
+    #                 )
+    #                 yield event.chain_result([node])
+    #
+    #         except Exception as e:
+    #             print(e)
+    #             yield event.plain_result("搜索图片失败")
 
 
     #设置定时任务，获取群聊/私聊的消息串
