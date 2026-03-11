@@ -95,7 +95,7 @@ class MyPlugin(Star):
             self.scheduler = AsyncIOScheduler()
             self.scheduler.add_job(
                 self.send_daily_comics_task,
-                CronTrigger(hour='8,20', minute=0),
+                CronTrigger(hour='8,12,18,22', minute=0),
                 # IntervalTrigger(minutes=5),
                 id='daily_comic_send',
                 misfire_grace_time=120, # 允许120秒的延迟容
@@ -412,7 +412,10 @@ class MyPlugin(Star):
                     newresNode = Nodes(
                         nodes=new_all_nodes
                     )
-                    yield event.chain_result([newresNode])
+                    try:
+                        yield event.chain_result([newresNode])
+                    except Exception as e:
+                        yield event.plain_result("发送失败")
 
             except Exception as e:
                 print(e)
@@ -1255,7 +1258,9 @@ async def send_daily_message(context: Context,botid):
     from astrbot.api.event import MessageChain
     message_chain = MessageChain()
 
-    from astrbot.api.message_components import Node, Plain, Image
+    All_node=[]
+
+    from astrbot.api.message_components import Node, Plain, Image,Nodes
 
     if count == 0:
         time_node = Node(
@@ -1265,7 +1270,7 @@ async def send_daily_message(context: Context,botid):
                 Plain("前段时间没有更新新的本子，起飞失败")
             ]
         )
-        message_chain.chain.append(time_node)
+        All_node.append(time_node)
         #发送写好的图片
         pic_path = "./data/plugins/astrbot_plugins_JMPlugins/no_new_benzi.gif"
         if os.path.exists(pic_path):
@@ -1276,7 +1281,7 @@ async def send_daily_message(context: Context,botid):
                     Image.fromFileSystem(pic_path)
                 ]
             )
-            message_chain.chain.append(image_node)
+            All_node.append(image_node)
     else:
         time_node =Node(
             uin=botid,
@@ -1285,7 +1290,7 @@ async def send_daily_message(context: Context,botid):
                 Plain("前一时间段内更新的本子有：")
             ]
         )
-        message_chain.chain.append(time_node)
+        All_node.append(time_node)
 
         total_len = len(result_album_id)
 
@@ -1310,7 +1315,7 @@ async def send_daily_message(context: Context,botid):
                 ]
             )
             if i >= cover_count:
-                message_chain.chain.append(node)
+                All_node.append(node)
                 continue
 
             #判断tag里面是否有需要过滤的内容：
@@ -1353,19 +1358,24 @@ async def send_daily_message(context: Context,botid):
                             Plain("未找到封面或者封面下载失败请窒息")
                         ]
                     )
-            message_chain.chain.append(node)
-            message_chain.chain.append(pic_node)
+            All_node.append(node)
+            All_node.append(pic_node)
 
     umos = get_unified_msg()
 
     for umo in umos:
         try:
+            resNode = Nodes(
+                nodes=All_node
+            )
+            message_chain.chain = [resNode]
             await context.send_message(umo, message_chain)
         except Exception as e:
             print(e)
             # 发送纯文字版本的更新本子
             from astrbot.api.event import MessageChain
             message_chain = MessageChain()
+            All_node=[]
             if count == 0:
                 time_node = Node(
                     uin=botid,
@@ -1374,7 +1384,7 @@ async def send_daily_message(context: Context,botid):
                         Plain("前段时间没有更新新的本子，起飞失败")
                     ]
                 )
-                message_chain.chain.append(time_node)
+                All_node.append(time_node)
                 # 发送写好的图片
                 pic_path = "./data/plugins/astrbot_plugins_JMPlugins/no_new_benzi.gif"
                 if os.path.exists(pic_path):
@@ -1385,7 +1395,7 @@ async def send_daily_message(context: Context,botid):
                             Image.fromFileSystem(pic_path)
                         ]
                     )
-                    message_chain.chain.append(image_node)
+                    All_node.append(image_node)
             else:
                 info_node = Node(
                     uin=botid,
@@ -1401,8 +1411,8 @@ async def send_daily_message(context: Context,botid):
                         Plain("前一时间段内更新的本子有：")
                     ]
                 )
-                message_chain.chain.append(info_node)
-                message_chain.chain.append(time_node)
+                All_node.append(info_node)
+                All_node.append(time_node)
 
                 for i in range(len(result_album_id)):
                     # 添加安全检查，防止tag索引超出范围
@@ -1424,8 +1434,12 @@ async def send_daily_message(context: Context,botid):
                         ]
                     )
 
-                    message_chain.chain.append(node)
+                    All_node.append(node)
                 try:
+                    resNode = Nodes(
+                        nodes=All_node
+                    )
+                    message_chain.chain = [resNode]
                     await context.send_message(umo, message_chain)
                 except Exception as e:
                     print(e)
