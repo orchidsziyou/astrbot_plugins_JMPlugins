@@ -284,7 +284,10 @@ def search_title_and_pic(download_path, option,max_count=15):
         photo = album_detail.getindex(0)
         photo01 = client.get_photo_detail(photo.photo_id, False)
 
-        image = photo01[0]
+        try:
+            image = photo01[0]
+        except:
+            continue
         if os.path.exists(os.path.join(folder_path, f'{i}.jpg')):
             os.remove(os.path.join(folder_path, f'{i}.jpg'))
         client.download_by_image_detail(image, os.path.join(folder_path, f'{i}.jpg'))

@@ -614,7 +614,10 @@ class MyPlugin(Star):
                     photo: JmPhotoDetail = album.getindex(0)
                     photo01 = client.get_photo_detail(photo.photo_id, False)
 
-                    image: JmImageDetail = photo01[0]
+                    try:
+                        image: JmImageDetail = photo01[0]
+                    except:
+                        continue
                     if os.path.exists(os.path.join(folder_path, f'{i}.jpg')):
                         os.remove(os.path.join(folder_path, f'{i}.jpg'))
                     client.download_by_image_detail(image, os.path.join(folder_path, f'{i}.jpg'))
